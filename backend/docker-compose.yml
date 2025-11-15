@@ -1,9 +1,8 @@
 version: "3.8"
+
 services:
-  db:
-    image: mysql:8.0
-    container_name: hosting_mysql
-    restart: unless-stopped
+  mysql:
+    image: mysql:8
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: hosting_anywhere
@@ -12,15 +11,27 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - db_data:/var/lib/mysql
-      - ./database.sql:/docker-entrypoint-initdb.d/database.sql:ro
+      - mysql-data:/var/lib/mysql
+      - ./database.sql:/docker-entrypoint-initdb.d/init.sql
 
   redis:
-    image: redis:latest
-    container_name: hosting_redis
+    image: redis:7
     ports:
       - "6379:6379"
-    restart: unless-stopped
+
+  # ────────────────────────
+  #  <--  BACKEND IS RUN LOCALLY  -->
+  #  Comment the whole block below
+  # ────────────────────────
+  # backend:
+  #   build: ./backend
+  #   ports:
+  #     - "5000:5000"
+  #   env_file:
+  #     - ./backend/.env
+  #   depends_on:
+  #     - mysql
+  #     - redis
 
 volumes:
-  db_data:
+  mysql-data:
