@@ -25,15 +25,6 @@ function Home() {
             >
               View Plans
             </Button>
-
-            <Button
-              onClick={() => navigate("/login")}
-              variant="outline"
-              size="lg"
-              className=" bg-gray-600 text-white border-gray-500 hover:bg-blue-600"
-            >
-              Sign In / Sign Up
-            </Button>
           </div>
         </div>
 

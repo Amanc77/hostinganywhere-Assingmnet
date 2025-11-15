@@ -1,113 +1,153 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-
-import { Label } from "../components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
+  CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
-} from "../components/ui/card";
+} from "@/components/ui/card";
+
+import { Mail, Lock, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import axiosInstance from "../api/axios";
+import { Toaster, toast } from "sonner";
 
 const Signup = () => {
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
-  const [fullName, setFullName] = useState("");
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [form, setForm] = useState({
+    username: "",
+    fullName: "",
+    email: "",
+    password: "",
+  });
 
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSignup = async (e) => {
     e.preventDefault();
-    setLoading(false);
-    navigate("/login");
+
+    if (!form.username || !form.email || !form.password) {
+      toast.error("Username, email and password are required");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const payload = {
+        username: form.username.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        fullName: form.fullName.trim() || null,
+      };
+
+      const res = await axiosInstance.post("/auth/signup", payload);
+
+      if (res?.data?.success) {
+        toast.success("Account created successfully!");
+        navigate("/login");
+      } else {
+        toast.error(res?.data?.message || "Signup failed");
+      }
+    } catch (err) {
+      console.error("Signup error:", err);
+      toast.error(err.response?.data?.message || "Server error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#07111a] flex items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-md text-white bg-[#161b22]">
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
+      <Card className="w-full max-w-md shadow-md bg-[#161b22] text-white">
         <CardHeader>
           <CardTitle>Create Account</CardTitle>
-          <CardDescription>
-            Sign up to get started with HostingAnywhere
-          </CardDescription>
+          <CardDescription>Create your HostingAnywhere account</CardDescription>
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="johndoe"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
+          <form className="space-y-4" onSubmit={handleSignup}>
+            <div className="space-y-2">
+              <Label>Username</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  name="username"
+                  placeholder="johndoe"
+                  className="pl-10 bg-transparent"
+                  value={form.username}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="fullName">Full Name</Label>
+            <div className="space-y-2">
+              <Label>Full Name</Label>
               <Input
-                id="fullName"
-                type="text"
+                name="fullName"
                 placeholder="John Doe"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                className="bg-transparent"
+                value={form.fullName}
+                onChange={handleChange}
               />
             </div>
 
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  name="email"
+                  type="email"
+                  placeholder="you@email.com"
+                  className="pl-10 bg-transparent"
+                  value={form.email}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
+            <div className="space-y-2">
+              <Label>Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  name="password"
+                  type="password"
+                  placeholder="••••••••"
+                  className="pl-10 bg-transparent"
+                  value={form.password}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              variant="solid"
-              disabled={loading}
-            >
+            <Button className="w-full" disabled={loading}>
               {loading ? "Creating..." : "Sign Up"}
             </Button>
-          </form>
 
-          <div className="mt-4 text-sm text-center text-gray-300">
-            <button
-              onClick={() => navigate("/login")}
-              className="text-indigo-400 hover:underline"
-            >
-              Already have an account? Sign in
-            </button>
-          </div>
+            <p className="text-sm text-center mt-3 text-gray-300">
+              Already have an account?{" "}
+              <span
+                className="text-indigo-400 cursor-pointer"
+                onClick={() => navigate("/login")}
+              >
+                Login
+              </span>
+            </p>
+          </form>
         </CardContent>
       </Card>
+
+      <Toaster position="top-right" />
     </div>
   );
 };

@@ -1,83 +1,126 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
+  CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
-} from "../components/ui/card";
+} from "@/components/ui/card";
+import { Mail, Lock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { userLoggedIn } from "@/store/authSlice";
+import axiosInstance from "../api/axios";
+import { Toaster, toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const dispatch = useDispatch();
+
+  const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(false);
-    navigate("/home");
+
+    if (!form.email || !form.password) {
+      toast.error("All fields are required");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await axiosInstance.post("/auth/login", form);
+
+      if (res?.data?.success) {
+        dispatch(
+          userLoggedIn({
+            user: res.data.user,
+            token: res.data.token || null,
+          })
+        );
+
+        toast.success("Login successful!");
+        navigate("/");
+      } else {
+        toast.error(res?.data?.message || "Invalid credentials");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+
+      toast.error(err.response?.data?.message || "Server error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#07111a] flex items-center justify-center px-4 py-12">
-      <Card className=" text-white w-full max-w-md bg-[#161b22]">
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
+      <Card className="w-full max-w-md shadow-md bg-[#161b22] text-white">
         <CardHeader>
-          <CardTitle>Welcome Back</CardTitle>
-          <CardDescription>Sign in to access your profile</CardDescription>
+          <CardTitle>Login</CardTitle>
+
+          <CardDescription>Sign in to access your account</CardDescription>
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+          <form className="space-y-4" onSubmit={handleLogin}>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  name="email"
+                  type="email"
+                  placeholder="you@email.com"
+                  className="pl-10 bg-transparent"
+                  value={form.email}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
+            <div className="space-y-2">
+              <Label>Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  name="password"
+                  type="password"
+                  placeholder="••••••••"
+                  className="pl-10 bg-transparent"
+                  value={form.password}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              variant="solid"
-              disabled={loading}
-            >
-              {loading ? "Signing in..." : "Sign In"}
+            <Button className="w-full" disabled={loading}>
+              {loading ? "Loading..." : "Login"}
             </Button>
-          </form>
 
-          <div className="mt-4 text-sm text-center text-gray-300">
-            <button
-              onClick={() => navigate("/signup")}
-              className="text-indigo-400 hover:underline"
-            >
-              Don't have an account? Sign up
-            </button>
-          </div>
+            <p className="text-sm text-center mt-3 text-gray-300">
+              Don't have an account?{" "}
+              <span
+                className="text-indigo-400 cursor-pointer"
+                onClick={() => navigate("/signup")}
+              >
+                Sign up
+              </span>
+            </p>
+          </form>
         </CardContent>
       </Card>
+
+      <Toaster position="top-right" />
     </div>
   );
 };
