@@ -46,9 +46,15 @@ export const loginUser = async (req, res) => {
       expiresIn: "7d",
     });
 
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     res.json({
       success: true,
-      token,
       user: { id: user.id, email: user.email, username: user.username },
     });
   } catch (e) {
